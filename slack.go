@@ -195,8 +195,8 @@ func (s *SlackHandler) SendAssignments(channelID string) (err error) {
 	var now = time.Now()
 
 	const Day = 3600 * 24
-
-	for i, ass := range asss {
+	var i int
+	for _, ass := range asss {
 		t, err := time.Parse(time.RFC3339, ass.DueTimeString)
 		if err != nil {
 			continue
@@ -233,6 +233,7 @@ func (s *SlackHandler) SendAssignments(channelID string) (err error) {
 			t.Format("Jan 2(Mon) 15:04"),
 			fmt.Sprintf("<%s|%s>", ass.EntityURL, ass.Title),
 		)
+		i++
 	}
 
 	s.messageSend(channelID, text)
