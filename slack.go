@@ -24,7 +24,8 @@ type SlackHandler struct {
 	timeSet ReglarFiles
 
 	regexp struct {
-		time *regexp.Regexp
+		time   *regexp.Regexp
+		detail *regexp.Regexp
 	}
 }
 
@@ -45,6 +46,7 @@ func NewSlackHandler(token string, panda *panda.Handler, regularFile string) (s 
 	}
 
 	s.regexp.time = regexp.MustCompile(`time\s+set\s+(\d?\d):(\d?\d)`)
+	s.regexp.detail = regexp.MustCompile(`(\d+)番目の課題の詳細`)
 
 	err = s.timeSet.Read(regularFile)
 
@@ -107,6 +109,12 @@ func (s *SlackHandler) messageGet(message *slackevents.AppMentionEvent) {
 	switch {
 	case strings.Contains(message.Text, "課題を確認"):
 		s.SendAssignments(message.Channel)
+	case s.regexp.detail.MatchString(message.Text):
+		var nums = s.regexp.detail.FindAllStringSubmatch(message.Text, -1)
+		for _, num := range nums {
+			n, _ := strconv.Atoi(num[1])
+			s.SendAssignmentDetail(n-1, message.Channel)
+		}
 	case strings.Contains(message.Text, "set"):
 		s.reglarAdd(message.Text, message.Channel)
 	case strings.Contains(message.Text, "remove"):
@@ -191,7 +199,7 @@ func (s *SlackHandler) SendAssignments(channelID string) (err error) {
 
 	const Day = 3600 * 24
 
-	for _, ass := range asss {
+	for i, ass := range asss {
 		t, err := time.Parse(time.RFC3339, ass.DueTimeString)
 		if err != nil {
 			continue
@@ -219,13 +227,52 @@ func (s *SlackHandler) SendAssignments(channelID string) (err error) {
 		}
 
 		text += fmt.Sprintf(
-			"%s%s\n　%s %s\n",
+			"%s%s\n　%d：%s %s\n",
 			emoji,
 			subject,
+			i+1,
 			t.Format("Jan 2(Mon) 15:04"),
 			fmt.Sprintf("<%s|%s>", ass.EntityURL, ass.Title),
 		)
 	}
+
+	s.messageSend(channelID, text)
+
+	return
+}
+
+func (s *SlackHandler) SendAssignmentDetail(num int, channelID string) (err error) {
+	asss, err := s.panda.GetAssignment()
+	if err != nil {
+		return
+	}
+	if num >= len(asss) {
+		s.messageSend(channelID, "Error: Out of range")
+		return
+	}
+
+	var text string
+	var ass = asss[num]
+
+	t, err := time.Parse(time.RFC3339, ass.DueTimeString)
+	if err != nil {
+		s.messageSend(channelID, "Error: Illigal time format")
+		return
+	}
+
+	var c = s.panda.GetContent(ass.Context)
+
+	var subject string
+	if len(c) < 1 {
+		subject = "科目名不詳"
+	} else {
+		subject = fmt.Sprintf("<%s|%s>", panda.BaseURI+"/portal/site/"+ass.Context, c[0].Title)
+	}
+
+	text += fmt.Sprintf("科目名：%s\n", subject)
+	text += fmt.Sprintf("課題名：<%s|%s>\n", ass.EntityURL, ass.Title)
+	text += fmt.Sprintf("〆　切：%s\n", t.Format("Jan 2(Mon) 15:04"))
+	text += fmt.Sprintf("内　容：\n%s", ass.Instructions)
 
 	s.messageSend(channelID, text)
 
