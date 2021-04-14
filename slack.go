@@ -208,6 +208,8 @@ func (s *SlackHandler) SendAssignments(channelID string) (err error) {
 
 		var emoji string
 		switch {
+		case t.Unix()-now.Unix() < 0:
+			continue
 		case t.Unix()-now.Unix() < Day:
 			emoji = ":red_circle:"
 		case t.Unix()-now.Unix() < 5*Day:
@@ -247,13 +249,34 @@ func (s *SlackHandler) SendAssignmentDetail(num int, channelID string) (err erro
 	if err != nil {
 		return
 	}
+
 	if num >= len(asss) {
-		s.messageSend(channelID, "Error: Out of range")
 		return
 	}
 
+	var ass panda.Assignment
+
+	{
+		var now = time.Now()
+		var check int
+		for _, a := range asss {
+			t, _ := time.Parse(time.RFC3339, a.DueTimeString)
+			if t.Unix()-now.Unix() < 0 {
+				continue
+			}
+			if check == num {
+				ass = a
+				break
+			}
+			check++
+		}
+		if check >= len(asss) {
+			s.messageSend(channelID, "Error: Not found")
+			return
+		}
+	}
+
 	var text string
-	var ass = asss[num]
 
 	t, err := time.Parse(time.RFC3339, ass.DueTimeString)
 	if err != nil {
