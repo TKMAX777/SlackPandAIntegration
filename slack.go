@@ -59,6 +59,8 @@ func (s *SlackHandler) Start() {
 		}
 		return
 	}()
+	go s.StartReglarSend()
+
 	for ev := range s.scm.Events {
 		switch ev.Type {
 		case scm.EventTypeConnected:
@@ -79,8 +81,8 @@ func (s *SlackHandler) Start() {
 	}
 }
 
-func (s *SlackHandler) StartReglarSend(reg ReglarFiles) {
-	for _, t := range reg.List {
+func (s *SlackHandler) StartReglarSend() {
+	for _, t := range s.timeSet.List {
 		var now = time.Now()
 		if now.Hour() != t.Time.Hour() ||
 			now.Minute() != t.Time.Minute() {
