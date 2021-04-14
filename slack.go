@@ -84,15 +84,16 @@ func (s *SlackHandler) Start() {
 }
 
 func (s *SlackHandler) StartReglarSend() {
-	for _, t := range s.timeSet.List {
-		var now = time.Now()
-		if now.Hour() != t.Time.Hour() ||
-			now.Minute() != t.Time.Minute() {
-			continue
+	for {
+		for _, t := range s.timeSet.List {
+			var now = time.Now()
+			if now.Hour() != t.Time.Hour() ||
+				now.Minute() != t.Time.Minute() {
+				continue
+			}
+
+			Slack.SendAssignments(t.ChannelID)
 		}
-
-		Slack.SendAssignments(t.ChannelID)
-
 		time.Sleep(time.Minute)
 	}
 }
