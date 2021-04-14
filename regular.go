@@ -33,7 +33,7 @@ func (r *ReglarFiles) Add(add ReglarFile) error {
 	return r.Save()
 }
 
-func (r ReglarFiles) Read(filePath string) (err error) {
+func (r *ReglarFiles) Read(filePath string) (err error) {
 	b, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		b = []byte("[]")
@@ -47,7 +47,7 @@ func (r ReglarFiles) Read(filePath string) (err error) {
 	return
 }
 
-func (r ReglarFiles) Save() (err error) {
+func (r *ReglarFiles) Save() (err error) {
 	b, err := json.MarshalIndent(r.List, "", "    ")
 	if err != nil {
 		return
