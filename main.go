@@ -28,7 +28,8 @@ func init() {
 		panic(err)
 	}
 
-	fmt.Printf("PandA login sccess!\n")
+	info := Panda.GetOwnInfo()
+	fmt.Printf("PandA login sccess!\nHello, %s.\n", info.Author)
 
 	Slack, err = NewSlackHandler(Settings.Slack.Token, Panda, CheckFile)
 	if err != nil {
