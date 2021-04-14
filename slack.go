@@ -158,7 +158,7 @@ func (s *SlackHandler) reglarRemove(text, channelID string) {
 			continue
 		}
 
-		dels = append(dels, n)
+		dels = append(dels, n-1)
 	}
 
 	sort.Ints(dels)
