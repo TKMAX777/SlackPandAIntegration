@@ -145,8 +145,6 @@ func (s *SlackHandler) reglarAdd(text, channelID string) {
 		s.timeSet.Add(ReglarFile{t, channelID})
 	}
 
-	s.timeSet.Save()
-
 	s.messageSend(channelID, "登録しました。")
 	s.reglarListSend(channelID)
 }
@@ -171,8 +169,6 @@ func (s *SlackHandler) reglarRemove(text, channelID string) {
 	for _, num := range dels {
 		s.timeSet.Remove(num)
 	}
-
-	s.timeSet.Save()
 
 	s.reglarListSend(channelID)
 }

@@ -16,7 +16,7 @@ type ReglarFiles struct {
 	Path string
 }
 
-func (r *ReglarFiles) Remove(num int) {
+func (r *ReglarFiles) Remove(num int) error {
 	switch {
 	case len(r.List) == num+1:
 		r.List = r.List[:num]
@@ -25,12 +25,12 @@ func (r *ReglarFiles) Remove(num int) {
 	default:
 	}
 
-	return
+	return r.Save()
 }
 
-func (r *ReglarFiles) Add(add ReglarFile) {
+func (r *ReglarFiles) Add(add ReglarFile) error {
 	r.List = append(r.List, add)
-	return
+	return r.Save()
 }
 
 func (r ReglarFiles) Read(filePath string) (err error) {
