@@ -180,7 +180,7 @@ func (s *SlackHandler) SendAssignments(channelID string) (err error) {
 	var text string
 	s.messageSend(channelID, "現在PandAに公開されている課題は次の通りです。")
 
-	asss, err := s.panda.AssignmentGet()
+	asss, err := s.panda.GetAssignment()
 	if err != nil {
 		return
 	}
@@ -207,7 +207,7 @@ func (s *SlackHandler) SendAssignments(channelID string) (err error) {
 			emoji = ":large_blue_circle:"
 		}
 
-		var c = s.panda.ContentGet(ass.Context)
+		var c = s.panda.GetContent(ass.Context)
 
 		var subject string
 		if len(c) < 1 {
