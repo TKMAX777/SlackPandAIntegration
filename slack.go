@@ -197,20 +197,17 @@ func (s *SlackHandler) SendAssignments(channelID string) (err error) {
 	const Day = 3600 * 24
 	var i int
 	for _, ass := range asss {
-		t, err := time.Parse(time.RFC3339, ass.DueTimeString)
-		if err != nil {
-			continue
-		}
-
 		var emoji string
+		var leftTime = ass.DueTime.Unix() - now.Unix()
+
 		switch {
-		case t.Unix()-now.Unix() < 0:
+		case leftTime < 0:
 			continue
-		case t.Unix()-now.Unix() < Day:
+		case leftTime < Day:
 			emoji = ":red_circle:"
-		case t.Unix()-now.Unix() < 5*Day:
+		case leftTime < 5*Day:
 			emoji = ":large_orange_circle:"
-		case t.Unix()-now.Unix() < 7*Day:
+		case leftTime < 7*Day:
 			emoji = ":large_green_circle:"
 		default:
 			emoji = ":large_blue_circle:"
@@ -230,7 +227,7 @@ func (s *SlackHandler) SendAssignments(channelID string) (err error) {
 			emoji,
 			subject,
 			i+1,
-			t.Format("Jan 2(Mon) 15:04"),
+			ass.DueTime.Local().Format("Jan 2(Mon) 15:04"),
 			fmt.Sprintf("<%s|%s>", ass.EntityURL, ass.Title),
 		)
 		i++
@@ -257,8 +254,7 @@ func (s *SlackHandler) SendAssignmentDetail(num int, channelID string) (err erro
 		var now = time.Now()
 		var check int
 		for _, a := range asss {
-			t, _ := time.Parse(time.RFC3339, a.DueTimeString)
-			if t.Unix()-now.Unix() < 0 {
+			if a.DueTime.Unix()-now.Unix() < 0 {
 				continue
 			}
 			if check == num {
@@ -275,12 +271,6 @@ func (s *SlackHandler) SendAssignmentDetail(num int, channelID string) (err erro
 
 	var text string
 
-	t, err := time.Parse(time.RFC3339, ass.DueTimeString)
-	if err != nil {
-		s.messageSend(channelID, "Error: Illigal time format")
-		return
-	}
-
 	var c = s.panda.GetContent(ass.Context)
 
 	var subject string
@@ -292,7 +282,7 @@ func (s *SlackHandler) SendAssignmentDetail(num int, channelID string) (err erro
 
 	text += fmt.Sprintf("科目名：%s\n", subject)
 	text += fmt.Sprintf("課題名：<%s|%s>\n", ass.EntityURL, ass.Title)
-	text += fmt.Sprintf("〆　切：%s\n", t.Format("Jan 2(Mon) 15:04"))
+	text += fmt.Sprintf("〆　切：%s\n", ass.DueTime.Local().Format("Jan 2(Mon) 15:04"))
 	text += fmt.Sprintf("内　容：\n%s", ass.Instructions)
 
 	s.messageSend(channelID, text)
