@@ -233,6 +233,10 @@ func (s *SlackHandler) SendAssignments(channelID string) (err error) {
 		i++
 	}
 
+	if len(asss) < 1 {
+		text = "現在課されている宿題はありません"
+	}
+
 	s.messageSend(channelID, text)
 
 	return
